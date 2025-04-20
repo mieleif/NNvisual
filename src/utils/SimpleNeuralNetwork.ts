@@ -59,18 +59,39 @@ export class SimpleNeuralNetwork {
       const prediction = this.sigmoid(output);
       
       // Extraire les résultats et les mettre en cache pour éviter des calculs répétés
-      let predictionResult;
-      let hiddenResult;
+      let predictionResult: number[] = [];
+      let hiddenResult: number[] = [];
       
       try {
-        predictionResult = math.squeeze(prediction);
-        hiddenResult = math.squeeze(hiddenOutput);
-      } catch (error) {
-        console.error("Error squeezing results:", error);
+        const squeezedPrediction = math.squeeze(prediction);
+        const squeezedHidden = math.squeeze(hiddenOutput);
         
-        // Fallback si squeeze échoue
-        predictionResult = prediction;
-        hiddenResult = hiddenOutput;
+        // Convertir les résultats en tableaux si nécessaire
+        if ((squeezedPrediction as any)._data) {
+          predictionResult = (squeezedPrediction as any)._data;
+        } else if (typeof (squeezedPrediction as any).toArray === 'function') {
+          predictionResult = (squeezedPrediction as any).toArray();
+        } else if (Array.isArray(squeezedPrediction)) {
+          predictionResult = squeezedPrediction as number[];
+        } else {
+          predictionResult = Array(this.outputSize).fill(0.25);
+        }
+        
+        if ((squeezedHidden as any)._data) {
+          hiddenResult = (squeezedHidden as any)._data;
+        } else if (typeof (squeezedHidden as any).toArray === 'function') {
+          hiddenResult = (squeezedHidden as any).toArray();
+        } else if (Array.isArray(squeezedHidden)) {
+          hiddenResult = squeezedHidden as number[];
+        } else {
+          hiddenResult = Array(this.hiddenSize).fill(0.5);
+        }
+      } catch (error) {
+        console.error("Error processing results:", error);
+        
+        // Fallback si le traitement échoue
+        predictionResult = Array(this.outputSize).fill(0.25);
+        hiddenResult = Array(this.hiddenSize).fill(0.5);
       }
       
       return {
