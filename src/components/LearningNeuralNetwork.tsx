@@ -68,11 +68,19 @@ const LearningNeuralNetwork = () => {
   }, [network]);
   
   // Fonctions pour gérer le dessin
-  const startDrawing = useCallback(() => {
+  const startDrawing = useCallback((e?: React.MouseEvent | React.TouchEvent) => {
+    // Prevent default for touch events to stop scrolling
+    if (e && 'touches' in e) {
+      e.preventDefault();
+    }
     setIsDrawing(true);
   }, []);
   
-  const stopDrawing = useCallback(() => {
+  const stopDrawing = useCallback((e?: React.MouseEvent | React.TouchEvent) => {
+    // Prevent default for touch events
+    if (e && 'touches' in e) {
+      e.preventDefault();
+    }
     setIsDrawing(false);
   }, []);
   
@@ -81,8 +89,8 @@ const LearningNeuralNetwork = () => {
     
     setGrid(prevGrid => {
       const newGrid = [...prevGrid.map(row => [...row])];
-      // Basculer entre 0 (blanc) et 1 (noir)
-      newGrid[rowIndex][colIndex] = newGrid[rowIndex][colIndex] ? 0 : 1;
+      // Toujours mettre à 1 (noir) pendant le dessin au lieu de basculer
+      newGrid[rowIndex][colIndex] = 1;
       return newGrid;
     });
   }, [isDrawing]);
@@ -387,18 +395,46 @@ const LearningNeuralNetwork = () => {
               onMouseLeave={stopDrawing}
               onTouchStart={startDrawing}
               onTouchEnd={stopDrawing}
+              onTouchCancel={stopDrawing}
+              // Prevent scrolling on touch
+              style={{ touchAction: 'none' }}
             >
               {grid.map((row, rowIndex) => (
                 row.map((cell, colIndex) => (
                   <div
                     key={`${rowIndex}-${colIndex}`}
+                    data-cell={`${rowIndex}-${colIndex}`}
                     className={`w-8 h-8 border border-gray-200 ${
                       cell ? 'bg-black' : 'bg-white'
                     } cursor-pointer`}
-                    onMouseDown={() => handleCellInteraction(rowIndex, colIndex)}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      startDrawing();
+                      handleCellInteraction(rowIndex, colIndex);
+                    }}
                     onMouseEnter={() => handleCellInteraction(rowIndex, colIndex)}
-                    onTouchStart={() => handleCellInteraction(rowIndex, colIndex)}
-                    onTouchMove={() => handleCellInteraction(rowIndex, colIndex)}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault(); // Prevent scrolling
+                      startDrawing();
+                      handleCellInteraction(rowIndex, colIndex);
+                    }}
+                    onTouchMove={(e) => {
+                      e.preventDefault(); // Prevent scrolling
+                      e.stopPropagation();
+                      
+                      // Get touch position and find which cell it's over
+                      const touch = e.touches[0];
+                      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                      
+                      // If we're over a cell, extract its position from the key attribute
+                      if (element && element.getAttribute('data-cell')) {
+                        const [cellRowIndex, cellColIndex] = element.getAttribute('data-cell')?.split('-').map(Number) || [];
+                        if (typeof cellRowIndex === 'number' && typeof cellColIndex === 'number') {
+                          handleCellInteraction(cellRowIndex, cellColIndex);
+                        }
+                      }
+                    }}
                   />
                 ))
               ))}

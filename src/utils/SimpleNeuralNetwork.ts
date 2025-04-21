@@ -24,7 +24,7 @@ export class SimpleNeuralNetwork {
     this.weights2 = math.matrix(math.random([hiddenSize, outputSize], -0.5, 0.5));
     this.bias2 = math.matrix(math.zeros([1, outputSize]));
     
-    this.learningRate = 0.1;
+    this.learningRate = 0.3;
     this.examples = []; // Stockage des exemples d'entraînement
   }
   
