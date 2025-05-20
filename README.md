@@ -29,7 +29,7 @@ Une application web interactive pour enseigner les principes fondamentaux des r�
 
 1. Cloner ce dépôt
    ```
-   git clone https://github.com/votrenom/NNvisual.git
+   git clone https://github.com/mieleif/NNvisual.git
    cd NNvisual
    ```
 
